@@ -313,6 +313,7 @@ showing.")
 (defvar which-key--last-try-2-loc nil
   "Internal: Last location of side-window when two locations
 used.")
+(defvar which-key-use-docstring-for-lambda nil)
 
 ;;;###autoload
 (define-minor-mode which-key-mode
@@ -797,6 +798,16 @@ removing a \"group:\" prefix."
                       (local 'which-key-local-map-description-face)
                       (t 'which-key-command-description-face)))))
 
+(defun which-key--maybe-docstring-for-lambda (key desc)
+  (if (and which-key-use-docstring-for-lambda
+           (string-match-p "\\`\\?\\?\\'" desc))
+      (let ((keyv (vconcat which-key--current-prefix (string-to-vector key)))
+            doc bnd)
+        (setq bnd (key-binding keyv))
+        (setq doc (documentation bnd))
+        (s-collapse-whitespace doc))
+    desc))
+
 (defun which-key--format-and-replace (unformatted)
   "Take a list of (key . desc) cons cells in UNFORMATTED, add
 faces and perform replacements according to the three replacement
@@ -813,6 +824,7 @@ alists. Returns a list (key separator description)."
               (local (eq (which-key--safe-lookup-key local-map (kbd keys)) (intern desc)))
               (key (which-key--maybe-replace
                     key which-key-key-replacement-alist))
+              (desc (which-key--maybe-docstring-for-lambda key desc))
               (desc (which-key--maybe-replace
                      desc which-key-description-replacement-alist))
               (desc (which-key--maybe-replace-key-based desc keys))
